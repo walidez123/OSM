@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Http\Controllers;
 
 use App\Models\Order;
@@ -6,21 +7,37 @@ use Illuminate\Http\Request;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Validation\ValidationException;
 use Exception;
+use Illuminate\Support\Facades\Log; 
 
 class OrderController extends Controller
 {
     
-    public function index()
-    {
-        try {
-            $orders = Order::all();
-            return response()->json($orders, 200);
-        } catch (Exception $e) {
-            return response()->json(['error' => 'Failed to fetch orders', 'message' => $e->getMessage()], 500);
-        }
-    }
+    public function index(Request $request)
+{
+    try {
+        $query = Order::query();
 
-   
+        // Filter by customer name if provided
+        if ($request->has('customer_name') && $request->customer_name) {
+            $query->where('customer_name', 'like', '%' . $request->customer_name . '%');
+        }
+
+        // Filter by status if provided
+        if ($request->has('status') && $request->status) {
+            $query->where('status', $request->status);
+        }
+
+        // Get the filtered orders
+        $orders = $query->get();
+
+        return response()->json($orders, 200);
+    } catch (Exception $e) {
+        Log::error('Failed to fetch orders', ['message' => $e->getMessage(), 'stack' => $e->getTraceAsString()]);
+        return response()->json(['error' => 'Failed to fetch orders', 'message' => $e->getMessage()], 500);
+    }
+}
+
+
     public function store(Request $request)
     {
         try {
@@ -50,26 +67,28 @@ class OrderController extends Controller
 
             return response()->json($order, 201);
         } catch (ValidationException $e) {
+            Log::error('Validation failed', ['errors' => $e->errors()]);
             return response()->json(['error' => 'Validation failed', 'messages' => $e->errors()], 422);
         } catch (Exception $e) {
+            Log::error('Failed to create order', ['message' => $e->getMessage(), 'stack' => $e->getTraceAsString()]);
             return response()->json(['error' => 'Failed to create order', 'message' => $e->getMessage()], 500);
         }
     }
 
-    
     public function show($id)
     {
         try {
             $order = Order::findOrFail($id);
             return response()->json($order, 200);
         } catch (ModelNotFoundException $e) {
+            Log::error('Order not found', ['order_id' => $id]);
             return response()->json(['error' => 'Order not found'], 404);
         } catch (Exception $e) {
+            Log::error('Failed to retrieve order', ['message' => $e->getMessage(), 'stack' => $e->getTraceAsString()]);
             return response()->json(['error' => 'Failed to retrieve order', 'message' => $e->getMessage()], 500);
         }
     }
 
-    
     public function update(Request $request, $id)
     {
         try {
@@ -83,15 +102,17 @@ class OrderController extends Controller
 
             return response()->json($order, 200);
         } catch (ModelNotFoundException $e) {
+            Log::error('Order not found for update', ['order_id' => $id]);
             return response()->json(['error' => 'Order not found'], 404);
         } catch (ValidationException $e) {
+            Log::error('Validation failed for update', ['errors' => $e->errors()]);
             return response()->json(['error' => 'Validation failed', 'messages' => $e->errors()], 422);
         } catch (Exception $e) {
+            Log::error('Failed to update order', ['message' => $e->getMessage(), 'stack' => $e->getTraceAsString()]);
             return response()->json(['error' => 'Failed to update order', 'message' => $e->getMessage()], 500);
         }
     }
 
-    
     public function destroy($id)
     {
         try {
@@ -100,8 +121,10 @@ class OrderController extends Controller
 
             return response()->json(['message' => 'Order deleted successfully'], 200);
         } catch (ModelNotFoundException $e) {
+            Log::error('Order not found for deletion', ['order_id' => $id]);
             return response()->json(['error' => 'Order not found'], 404);
         } catch (Exception $e) {
+            Log::error('Failed to delete order', ['message' => $e->getMessage(), 'stack' => $e->getTraceAsString()]);
             return response()->json(['error' => 'Failed to delete order', 'message' => $e->getMessage()], 500);
         }
     }

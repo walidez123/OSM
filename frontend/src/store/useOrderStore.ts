@@ -9,10 +9,13 @@ export const useOrderStore = create((set, get) => ({
   isUpdatingOrder: false,
   isDeletingOrder: false,
 
-  getOrders: async () => {
+  // Updated getOrders to accept filters
+  getOrders: async (customerName = '', status = '') => {
     set({ isGettingOrders: true });
     try {
-      const res = await axiosInstance.get(`/order`);
+      const res = await axiosInstance.get('/order', {
+        params: { customer_name: customerName, status: status }
+      });
       set({ orders: res.data });
     } catch (err) {
       console.error(err);
@@ -24,9 +27,9 @@ export const useOrderStore = create((set, get) => ({
   createOrder: async (data) => {
     set({ isCreatingOrder: true });
     try {
-      await axiosInstance.post(`/order`, data);
+      await axiosInstance.post('/order', data);
       toast.success("Order created successfully");
-      get().getOrders();
+      get().getOrders(); // Fetch updated orders
     } catch (err) {
       console.error(err);
       toast.error("Failed to create order");
@@ -42,7 +45,7 @@ export const useOrderStore = create((set, get) => ({
         total_price: data.total_price,
       });
       toast.success("Order updated successfully");
-      get().getOrders();
+      get().getOrders(); // Fetch updated orders
     } catch (err) {
       console.error(err);
       toast.error("Failed to update order");
@@ -55,7 +58,7 @@ export const useOrderStore = create((set, get) => ({
     try {
       await axiosInstance.delete(`/order/${id}`);
       toast.success("Order deleted successfully");
-      get().getOrders();
+      get().getOrders(); // Fetch updated orders
     } catch (err) {
       console.error(err);
       toast.error("Failed to delete order");
