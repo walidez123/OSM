@@ -43,13 +43,13 @@ export const useAuthStore = create((set, get) => ({
   login: async (email, password) => {
     set({ isLoggingIn: true });
     try {
-      await get().initializeCSRF(); // Initialize CSRF protection
+      await get().initializeCSRF(); 
       const res = await axiosInstance.post("/login", { email, password });
       const { user, token } = res.data;
   
-      localStorage.setItem("token", token); // Save token to localStorage
+      localStorage.setItem("token", token);
       set({ user, isAuthenticated: true, token });
-      axiosInstance.defaults.headers.common["Authorization"] = `Bearer ${token}`; // Attach token to axios instance
+      axiosInstance.defaults.headers.common["Authorization"] = `Bearer ${token}`; 
       toast.success("Login successful");
     } catch (err) {
       console.error(err);
@@ -62,7 +62,7 @@ export const useAuthStore = create((set, get) => ({
   register: async (name, email, password, password_confirmation) => {
     set({ isRegistering: true });
     try {
-      await get().initializeCSRF(); // Initialize CSRF protection
+      await get().initializeCSRF(); 
       const res = await axiosInstance.post("/register", {
         name,
         email,
@@ -71,9 +71,9 @@ export const useAuthStore = create((set, get) => ({
       });
       const { user, token } = res.data;
 
-      localStorage.setItem("token", token); // Save token to localStorage
+      localStorage.setItem("token", token); 
       set({ user, isAuthenticated: true, token });
-      axiosInstance.defaults.headers.common["Authorization"] = `Bearer ${token}`; // Attach token to axios instance
+      axiosInstance.defaults.headers.common["Authorization"] = `Bearer ${token}`; 
       toast.success("Registration successful");
     } catch (err) {
       console.error(err);
@@ -87,9 +87,9 @@ export const useAuthStore = create((set, get) => ({
     set({ isLoggingOut: true });
     try {
       await axiosInstance.post("/logout");
-      localStorage.removeItem("token"); // Clear token from localStorage
+      localStorage.removeItem("token");
       set({ user: null, isAuthenticated: false, token: null });
-      delete axiosInstance.defaults.headers.common["Authorization"]; // Remove token from axios instance
+      delete axiosInstance.defaults.headers.common["Authorization"]; 
       toast.success("Logged out successfully");
     } catch (err) {
       console.error(err);

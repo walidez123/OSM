@@ -2,25 +2,27 @@ import React, { useEffect, useState } from 'react';
 import { Edit, Trash2 } from 'lucide-react';
 import EditProductModal from './EditProductModal';
 import { useOrderStore } from '../store/useOrderStore';
-import ConfirmationModal from './ConfirmationPopup'; // Import the new modal
+import ConfirmationModal from './ConfirmationPopup';
 
 const ProductList: React.FC = () => {
-  const { orders, getOrders, isGettingOrders, deleteOrder } = useOrderStore();
+  const { orders, getOrders, isGettingOrders, deleteOrder, pagination } = useOrderStore();
   const [editingOrder, setEditingOrder] = useState(null);
   const [isDeleteModalOpen, setDeleteModalOpen] = useState(false);
   const [orderToDelete, setOrderToDelete] = useState<string | null>(null);
   const [searchCustomerName, setSearchCustomerName] = useState('');
   const [searchStatus, setSearchStatus] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [perPage, setPerPage] = useState(10);
 
   useEffect(() => {
-    getOrders(searchCustomerName, searchStatus);
-  }, [getOrders, searchCustomerName, searchStatus]);
+    getOrders(searchCustomerName, searchStatus, currentPage, perPage);
+  }, [getOrders, searchCustomerName, searchStatus, currentPage, perPage]);
 
   const handleDelete = async () => {
     if (orderToDelete) {
       await deleteOrder(orderToDelete);
-      setDeleteModalOpen(false); 
-      setOrderToDelete(null); 
+      setDeleteModalOpen(false);
+      setOrderToDelete(null);
     }
   };
 
@@ -42,18 +44,27 @@ const ProductList: React.FC = () => {
     setSearchStatus(e.target.value);
   };
 
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  const handlePerPageChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setPerPage(Number(e.target.value));
+    setCurrentPage(1); 
+  };
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'pending':
-        return 'bg-yellow-500 text-white'; 
+        return 'bg-yellow-500 text-white';
       case 'processing':
-        return 'bg-blue-500 text-white'; 
+        return 'bg-blue-500 text-white';
       case 'completed':
-        return 'bg-green-500 text-white'; 
+        return 'bg-green-500 text-white';
       case 'cancelled':
-        return 'bg-red-500 text-white'; 
+        return 'bg-red-500 text-white';
       default:
-        return 'bg-gray-200 text-black'; 
+        return 'bg-gray-200 text-black';
     }
   };
 
@@ -64,7 +75,6 @@ const ProductList: React.FC = () => {
   return (
     <>
       <div className="mb-4 flex gap-4">
-        {/* Search by customer name */}
         <input
           type="text"
           className="input input-bordered"
@@ -72,7 +82,6 @@ const ProductList: React.FC = () => {
           value={searchCustomerName}
           onChange={handleSearchChange}
         />
-        {/* Filter by status */}
         <select
           className="select select-bordered"
           value={searchStatus}
@@ -83,6 +92,15 @@ const ProductList: React.FC = () => {
           <option value="processing">Processing</option>
           <option value="completed">Completed</option>
           <option value="cancelled">Cancelled</option>
+        </select>
+        <select
+          className="select select-bordered"
+          value={perPage}
+          onChange={handlePerPageChange}
+        >
+          <option value={10}>10 per page</option>
+          <option value={20}>20 per page</option>
+          <option value={50}>50 per page</option>
         </select>
       </div>
 
@@ -105,8 +123,7 @@ const ProductList: React.FC = () => {
                 <td>{order.email}</td>
                 <td>{order.phone_number}</td>
                 <td className={` rounded `}>
-                  <p className={`${getStatusColor(order.status)} p-2 rounded-md`}>{order.status}
-                    </p>
+                  <p className={`${getStatusColor(order.status)} p-2 rounded-md`}>{order.status}</p>
                 </td>
                 <td>${order.total_price}</td>
                 <td>
@@ -129,6 +146,26 @@ const ProductList: React.FC = () => {
             ))}
           </tbody>
         </table>
+      </div>
+
+      <div className="flex justify-between items-center mt-4">
+        <button
+          className="btn btn-sm"
+          onClick={() => handlePageChange(currentPage - 1)}
+          disabled={currentPage === 1}
+        >
+          Previous
+        </button>
+        <span>
+          Page {currentPage} of {pagination?.last_page || 1}
+        </span>
+        <button
+          className="btn btn-sm"
+          onClick={() => handlePageChange(currentPage + 1)}
+          disabled={currentPage === (pagination?.last_page || 1)}
+        >
+          Next
+        </button>
       </div>
 
       {editingOrder && (

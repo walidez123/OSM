@@ -4,19 +4,38 @@ import { create } from "zustand";
 
 export const useOrderStore = create((set, get) => ({
   orders: [],
+  pagination: {
+    current_page: 1,
+    last_page: 1,
+    per_page: 10,
+    total: 0,
+  },
   isGettingOrders: false,
   isCreatingOrder: false,
   isUpdatingOrder: false,
   isDeletingOrder: false,
 
-  // Updated getOrders to accept filters
-  getOrders: async (customerName = '', status = '') => {
+  // Updated getOrders to accept filters and pagination
+  getOrders: async (customerName = '', status = '', page = 1, perPage = 10) => {
     set({ isGettingOrders: true });
     try {
       const res = await axiosInstance.get('/order', {
-        params: { customer_name: customerName, status: status }
+        params: {
+          customer_name: customerName,
+          status: status,
+          page: page,
+          per_page: perPage,
+        },
       });
-      set({ orders: res.data });
+      set({
+        orders: res.data.data, // Assuming the API returns `data` for the orders
+        pagination: {
+          current_page: res.data.current_page,
+          last_page: res.data.last_page,
+          per_page: res.data.per_page,
+          total: res.data.total,
+        },
+      });
     } catch (err) {
       console.error(err);
       toast.error("Failed to fetch orders");

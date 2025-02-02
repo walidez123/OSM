@@ -13,29 +13,30 @@ class OrderController extends Controller
 {
     
     public function index(Request $request)
-{
-    try {
-        $query = Order::query();
-
-        // Filter by customer name if provided
-        if ($request->has('customer_name') && $request->customer_name) {
-            $query->where('customer_name', 'like', '%' . $request->customer_name . '%');
+    {
+        try {
+            $query = Order::query();
+    
+            // Filter by customer name if provided
+            if ($request->has('customer_name') && $request->customer_name) {
+                $query->where('customer_name', 'like', '%' . $request->customer_name . '%');
+            }
+    
+            // Filter by status if provided
+            if ($request->has('status') && $request->status) {
+                $query->where('status', $request->status);
+            }
+    
+            // Paginate the results
+            $perPage = $request->input('per_page', 10); 
+            $orders = $query->paginate($perPage);
+    
+            return response()->json($orders, 200);
+        } catch (Exception $e) {
+            Log::error('Failed to fetch orders', ['message' => $e->getMessage(), 'stack' => $e->getTraceAsString()]);
+            return response()->json(['error' => 'Failed to fetch orders', 'message' => $e->getMessage()], 500);
         }
-
-        // Filter by status if provided
-        if ($request->has('status') && $request->status) {
-            $query->where('status', $request->status);
-        }
-
-        // Get the filtered orders
-        $orders = $query->get();
-
-        return response()->json($orders, 200);
-    } catch (Exception $e) {
-        Log::error('Failed to fetch orders', ['message' => $e->getMessage(), 'stack' => $e->getTraceAsString()]);
-        return response()->json(['error' => 'Failed to fetch orders', 'message' => $e->getMessage()], 500);
     }
-}
 
 
     public function store(Request $request)
